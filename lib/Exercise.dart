@@ -1,6 +1,9 @@
+import 'dart:core';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:gpt/ListOfExcises.dart';
+import 'package:gpt/list_of_excises.dart';
 
 class ExerciseMain extends StatefulWidget {
   const ExerciseMain({super.key});
@@ -14,26 +17,37 @@ class _ExerciseMainState extends State<ExerciseMain> {
   TextEditingController exerciseController = TextEditingController();
   TextEditingController repsController = TextEditingController();
   TextEditingController setsController = TextEditingController();
+
+  // DateTime _selectedDate = DateTime.now();
+
   final _formKey = GlobalKey<FormState>();
-  String _exerciseName = "";
+  String exerciseName = "";
   int _reps = 0;
   int _sets = 0;
 
+  // String chosenDate = "";
+
   @override
   Widget build(BuildContext context) {
+    // var day = _selectedDate.day;
+    // var month = _selectedDate.month;
+    // String mydate = "Date : $day of $month".toString();
+    // chosenDate = mydate;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xff363F54),
         title: const Text("Exercises"),
         actions: [
           IconButton(
             icon: const Icon(
               Icons.arrow_forward,
-              color: Colors.black,
+              color: Colors.white,
             ),
             onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => ExercisesPage()));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ExercisesPage()));
             },
           )
         ],
@@ -48,8 +62,9 @@ class _ExerciseMainState extends State<ExerciseMain> {
               Container(
                 padding: const EdgeInsets.only(left: 50, right: 20),
                 child: TextFormField(
+                  keyboardType: TextInputType.text,
                   decoration: const InputDecoration(
-                    labelText: 'Exercise Name:',
+                    labelText: 'Name of Exercise: ',
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black, width: 2.0),
                     ),
@@ -63,7 +78,7 @@ class _ExerciseMainState extends State<ExerciseMain> {
                     }
                     return null;
                   },
-                  onSaved: (value) => _exerciseName = value!,
+                  onSaved: (value) => exerciseName = value!,
                 ),
               ),
               const SizedBox(
@@ -72,19 +87,19 @@ class _ExerciseMainState extends State<ExerciseMain> {
               Container(
                 padding: const EdgeInsets.only(left: 50, right: 20),
                 child: TextFormField(
+                  keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Number of reps:',
+                    labelText: 'Number of Reps:(kg)',
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black, width: 2.0),
                     ),
                     border: OutlineInputBorder(),
                     labelStyle: TextStyle(color: Colors.black),
                   ),
-                  keyboardType: TextInputType.number,
                   controller: repsController,
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return 'Please enter the number of reps:';
+                      return 'Please enter the Number of Reps';
                     }
                     return null;
                   },
@@ -97,19 +112,19 @@ class _ExerciseMainState extends State<ExerciseMain> {
               Container(
                 padding: const EdgeInsets.only(left: 50, right: 20),
                 child: TextFormField(
+                  keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Number of sets:',
+                    labelText: 'Number of Sets: ',
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black, width: 2.0),
                     ),
                     border: OutlineInputBorder(),
                     labelStyle: TextStyle(color: Colors.black),
                   ),
-                  keyboardType: TextInputType.number,
                   controller: setsController,
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return 'Please enter the number of sets';
+                      return 'Please enter the Number of Sets';
                     }
                     return null;
                   },
@@ -119,9 +134,32 @@ class _ExerciseMainState extends State<ExerciseMain> {
               const SizedBox(
                 height: 10,
               ),
+              // ElevatedButton(
+              //   style: ElevatedButton.styleFrom(
+              //       backgroundColor: const Color(0xff39486b)),
+              //   child: const Text("Select Date"),
+              //   onPressed: () async {
+              //     final date = await showDatePicker(
+              //         context: context,
+              //         initialDate: DateTime.now(),
+              //         firstDate: DateTime(2000),
+              //         lastDate: DateTime(2025));
+              //     if (date != null) {
+              //       setState(() {
+              //         var day = _selectedDate.day;
+              //         var month = _selectedDate.month;
+              //         String mydate = "$day th of $month".toString();
+              //         chosenDate = mydate;
+              //
+              //         print(chosenDate);
+              //       });
+              //     }
+              //   },
+              // ),
               ElevatedButton(
                 onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff363F54)),
                 child: const Text('Save'),
               ),
             ],
@@ -132,21 +170,22 @@ class _ExerciseMainState extends State<ExerciseMain> {
   }
 
   void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+    if (FirebaseAuth.instance.currentUser != null) {
+      if (_formKey.currentState!.validate()) {
+        _formKey.currentState!.save();
 
-      database.ref().child("exercises").push().set({
-        "name": _exerciseName,
-        "reps": _reps,
-        "sets": _sets,
-      });
-      print("ITS DONE!!!");
-      // Clear the text fields
-      exerciseController.clear();
-      repsController.clear();
-      setsController.clear();
+        database.ref().child("exercises").push().set({
+          "name": exerciseName,
+          "reps": _reps,
+          "sets": _sets,
+          // "Date": chosenDate,
+        });
 
-      // Navigator.pop(context);
+        // Clear the text fields
+        exerciseController.clear();
+        repsController.clear();
+        setsController.clear();
+      }
     }
   }
 }
