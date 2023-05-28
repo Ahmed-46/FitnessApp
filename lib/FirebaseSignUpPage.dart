@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gpt/Exercise.dart';
 
+import 'Firebase_SignIn_Page.dart';
+
 class FirebaseAuthPage extends StatefulWidget {
   const FirebaseAuthPage({Key? key}) : super(key: key);
 
@@ -10,17 +12,31 @@ class FirebaseAuthPage extends StatefulWidget {
   State<FirebaseAuthPage> createState() => _FirebaseAuthPageState();
 }
 
-final navigatorKey = GlobalKey<NavigatorState>();
+// final navigatorKey = GlobalKey<NavigatorState>();
 
 class _FirebaseAuthPageState extends State<FirebaseAuthPage> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
 
+  bool isLoading = false; // Added isLoading variable
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xff363F54),
+        title: const Text('New Account'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const FirebaseSignInPage()));
+          },
+        ),
+      ),
+      body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Column(
@@ -95,6 +111,11 @@ class _FirebaseAuthPageState extends State<FirebaseAuthPage> {
   }
 
   Future<void> signup(BuildContext context) async {
+    final NavigatorState navigator = Navigator.of(context);
+    setState(() {
+      isLoading =
+          true; // Set isLoading to true to show CircularProgressIndicator
+    });
     showDialog(
       barrierDismissible: false,
       context: context,
@@ -106,8 +127,8 @@ class _FirebaseAuthPageState extends State<FirebaseAuthPage> {
     if (passwordController.text.trim() ==
         confirmPasswordController.text.trim()) {
       try {
-        final NavigatorState navigator =
-            Navigator.of(context); // Capture the context
+        // final NavigatorState navigator =
+        //     Navigator.of(context); // Capture the context
         await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
@@ -119,15 +140,28 @@ class _FirebaseAuthPageState extends State<FirebaseAuthPage> {
           MaterialPageRoute(builder: (context) => const ExerciseMain()),
         );
       } on FirebaseAuthException catch (e) {
+        navigator.pop();
+        print("not working");
         if (kDebugMode) {
           print(e);
         }
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          backgroundColor: Color(0xff363F54),
+          duration: Duration(seconds: 5),
+          content: Text('LOGIN Failed'),
+        ));
       }
     } else {
+      navigator.pop();
+      print("issue again");
       if (kDebugMode) {
         print("Passwords don't match");
       }
     }
+    setState(() {
+      isLoading =
+          false; // Set isLoading to false after completing the sign-up process
+    });
 
     emailController.clear();
     passwordController.clear();
